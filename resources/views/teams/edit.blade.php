@@ -47,6 +47,32 @@
                     <textarea name="description" rows="4">{{ $team->description }}</textarea>
                 </div>
             </div>
+            <div class="input-style-1">
+
+<label>Select Manager</label>
+
+<select name="manager_id" class="form-control" required>
+
+<option value="">
+Choose Manager
+</option>
+
+
+@foreach($managers as $manager)
+
+<option value="{{ $manager->id }}"
+{{ $team->manager_id == $manager->id ? 'selected' : '' }}>
+
+{{ $manager->name }}
+
+</option>
+
+@endforeach
+
+
+</select>
+
+</div>
 
         </div>
 

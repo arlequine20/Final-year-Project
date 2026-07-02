@@ -18,7 +18,10 @@ class Task extends Model
         'status',
         'priority',
         'due_date',
-        'created_by'
+        'created_by',
+        'attachment',
+        'progress_file',
+        'progress_note' 
     ];
   
 
@@ -36,4 +39,9 @@ class Task extends Model
     {
         return $this->belongsTo(User::class, 'created_by');
     }
+    public function comments()
+{
+    return $this->hasMany(Comment::class);
+}
+
 }

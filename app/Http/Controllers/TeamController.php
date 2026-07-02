@@ -9,43 +9,122 @@ use App\Models\User;
 
 class TeamController extends Controller
 {
+    private function ensureAdmin()
+    {
+        if (Auth::user()->role !== 'admin') {
+            abort(403, 'Unauthorized action.');
+        }
+    }
+
     // Show create team form
     public function create()
-    {
-        return view('teams.create');
-    }
+{
+    $this->ensureAdmin();
+
+    $managers = User::where('role','manager')->get();
+
+    return view('teams.create', compact('managers'));
+}
 
     // Save team to database
     public function store(Request $request)
     {
-        $request->validate([
-            'name' => 'required|string|max:255',
-            'description' => 'nullable|string',
-        ]);
+        $this->ensureAdmin();
 
-        Team::create([
-            'name' => $request->name,
-            'description' => $request->description,
-            'created_by' => Auth::id(),
-        ]);
+       $request->validate([
+
+'name'=>'required|string|max:255',
+
+'description'=>'nullable|string',
+
+'manager_id'=>'required|exists:users,id'
+
+]);
+
+  Team::create([
+
+    'name'=>$request->name,
+
+    'description'=>$request->description,
+
+    'created_by'=>Auth::id(),
+
+    'manager_id'=>$request->manager_id,
+
+]);
 
         return redirect('/teams')->with('success', 'Team created successfully!');
     }
-    public function index()
+public function index()
 {
-    $teams = Team::with('creator')->latest()->get();
+    $user = Auth::user();
+
+    if ($user->role === 'manager') {
+
+        $teams = $user->teams()
+            ->with(['creator','users'])
+            ->latest()
+            ->get();
+
+    } elseif ($user->role === 'admin') {
+
+        $teams = Team::with(['creator','users'])
+            ->latest()
+            ->get();
+
+    } else {
+
+        abort(403,'Unauthorized action.');
+
+    }
+
+
     return view('teams.index', compact('teams'));
 }
 public function members($id)
 {
-    $team = Team::with('users')->findOrFail($id);
-    $users = User::whereNotIn('id', $team->users->pluck('id'))->get();
+    $team = Team::with(['users', 'manager'])->findOrFail($id);
 
-    return view('teams.members', compact('team', 'users'));
+    $user = Auth::user();
+
+
+    if($user->role === 'manager'){
+
+        if(!$user->teams->contains($team->id)){
+            abort(403,'Unauthorized action.');
+        }
+
+    } 
+    elseif($user->role !== 'admin'){
+
+        abort(403,'Unauthorized action.');
+
+    }
+
+
+    $users = collect();
+
+
+    if($user->role === 'admin'){
+        $excludedIds = $team->users->pluck('id');
+        if ($team->manager_id) {
+            $excludedIds->push($team->manager_id);
+        }
+
+        $users = User::whereNotIn('id', $excludedIds->filter())->get();
+    }
+
+
+    return view('teams.members', compact(
+        'team',
+        'users'
+    ));
 }
 
 public function addMember(Request $request, $id)
 {
+    $this->ensureAdmin();
+
     $team = Team::findOrFail($id);
 
     $request->validate([
@@ -58,6 +137,8 @@ public function addMember(Request $request, $id)
 }
 public function delete($id)
 {
+    $this->ensureAdmin();
+
     $team = Team::with('tasks')->findOrFail($id);
 
     if ($team->tasks->count() > 0) {
@@ -70,26 +151,51 @@ public function delete($id)
 }
 public function edit($id)
 {
+    $this->ensureAdmin();
+
     $team = Team::findOrFail($id);
-    return view('teams.edit', compact('team'));
+
+    $managers = User::where('role','manager')->get();
+
+    return view('teams.edit', compact('team','managers'));
 }
 
 public function update(Request $request, $id)
 {
+    $this->ensureAdmin();
+
     $team = Team::findOrFail($id);
 
+
     $request->validate([
-        'name' => 'required|string|max:255'
+
+        'name' => 'required|string|max:255',
+
+        'description' => 'nullable|string',
+
+        'manager_id' => 'required|exists:users,id'
+
     ]);
 
-    $team->name = $request->name;
-    $team->description = $request->description;
-    $team->save();
 
-    return redirect('/teams')->with('success', 'Team updated successfully.');
+    $team->update([
+
+        'name'=>$request->name,
+
+        'description'=>$request->description,
+
+        'manager_id'=>$request->manager_id
+
+    ]);
+
+
+    return redirect('/teams')
+        ->with('success','Team updated successfully.');
 }
 public function removeMember($teamId, $userId)
 {
+    $this->ensureAdmin();
+
     $team = \App\Models\Team::findOrFail($teamId);
 
     // detach user from team

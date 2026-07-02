@@ -11,6 +11,7 @@ class Team extends Model
         'name',
         'description',
         'created_by',
+        'manager_id',
     ];
 
     public function creator()
@@ -25,5 +26,9 @@ class Team extends Model
     public function tasks()
 {
     return $this->hasMany(Task::class);
+}
+public function manager()
+{
+    return $this->belongsTo(User::class, 'manager_id');
 }
 }

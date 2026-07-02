@@ -34,6 +34,31 @@
                     <label class="form-label fw-semibold">Description</label>
                     <textarea name="description" rows="5" class="form-control" placeholder="Enter team description"></textarea>
                 </div>
+                <div class="input-style-1">
+
+<label>Select Manager</label>
+
+<select name="manager_id" class="form-control" required>
+
+<option value="">
+Choose Manager
+</option>
+
+
+@foreach($managers as $manager)
+
+<option value="{{ $manager->id }}">
+
+{{ $manager->name }}
+
+</option>
+
+@endforeach
+
+
+</select>
+
+</div>
 
                 <div class="d-flex gap-2">
                     <button type="submit" class="main-btn primary-btn btn-hover">

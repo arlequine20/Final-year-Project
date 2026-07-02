@@ -3,7 +3,6 @@
 @extends('layout')
 
 @section('title', 'Login')
-
 @section('body-class', 'auth-page')
 
 @section('content')
@@ -64,6 +63,9 @@
                         </form>
 
                         <div class="singin-option pt-40">
+                            <p class="text-sm text-medium text-dark text-center mb-2">
+                                <a href="/forgot-password" style="color: #16a34a;">Forgot your password?</a>
+                            </p>
                             <p class="text-sm text-medium text-dark text-center">
                                 Don’t have an account?
                                 <a href="/register" style="color: #16a34a;">Create one</a>
